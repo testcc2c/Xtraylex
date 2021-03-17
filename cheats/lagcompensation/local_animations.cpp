@@ -11,7 +11,7 @@ void local_animations::run(ClientFrameStage_t stage)
 		{
 			fake_server_update = false;
 
-			if (g_ctx.local()->m_flSimulationTime() != fake_simulation_time)
+			if (g_ctx.local()->m_flSimulationTime() != fake_simulation_time) //-V550 //-V807
 			{
 				fake_server_update = true;
 				fake_simulation_time = g_ctx.local()->m_flSimulationTime();
@@ -25,14 +25,14 @@ void local_animations::run(ClientFrameStage_t stage)
 		}
 		else if (stage == FRAME_RENDER_START)
 		{
-			auto animstate = g_ctx.local()->get_animation_state();
+			auto animstate = g_ctx.local()->get_animation_state(); //-V807
 
 			if (!animstate)
 				return;
 
 			real_server_update = false;
 
-			if (g_ctx.local()->m_flSimulationTime() != real_simulation_time)
+			if (g_ctx.local()->m_flSimulationTime() != real_simulation_time) //-V550
 			{
 				real_server_update = true;
 				real_simulation_time = g_ctx.local()->m_flSimulationTime();
@@ -47,7 +47,7 @@ void local_animations::run(ClientFrameStage_t stage)
 	}
 	else if (stage == FRAME_RENDER_START)
 	{
-		auto animstate = g_ctx.local()->get_animation_state();
+		auto animstate = g_ctx.local()->get_animation_state(); //-V807
 
 		if (!animstate)
 			return;
@@ -55,7 +55,7 @@ void local_animations::run(ClientFrameStage_t stage)
 		real_server_update = false;
 		fake_server_update = false;
 
-		if (g_ctx.local()->m_flSimulationTime() != real_simulation_time || g_ctx.local()->m_flSimulationTime() != fake_simulation_time)
+		if (g_ctx.local()->m_flSimulationTime() != real_simulation_time || g_ctx.local()->m_flSimulationTime() != fake_simulation_time) //-V550
 		{
 			real_server_update = fake_server_update = true;
 			real_simulation_time = fake_simulation_time = g_ctx.local()->m_flSimulationTime();
@@ -73,8 +73,8 @@ void local_animations::run(ClientFrameStage_t stage)
 void local_animations::update_prediction_animations()
 {
 	auto alloc = !local_data.prediction_animstate;
-	auto change = !alloc && handle != &g_ctx.local()->GetRefEHandle();
-	auto reset = !alloc && !change && g_ctx.local()->m_flSpawnTime() != spawntime;
+	auto change = !alloc && handle != &g_ctx.local()->GetRefEHandle(); //-V807
+	auto reset = !alloc && !change && g_ctx.local()->m_flSpawnTime() != spawntime; //-V550
 
 	if (change)
 		m_memalloc()->Free(local_data.prediction_animstate);
@@ -98,10 +98,10 @@ void local_animations::update_prediction_animations()
 
 	if (!alloc && !change && !reset)
 	{
-		float pose_parameter[24];
+		float pose_parameter[24]; //-V688
 		memcpy(pose_parameter, &g_ctx.local()->m_flPoseParameter(), 24 * sizeof(float));
 
-		AnimationLayer layers[15];
+		AnimationLayer layers[15]; //-V688
 		memcpy(layers, g_ctx.local()->get_animlayers(), g_ctx.local()->animlayer_count() * sizeof(AnimationLayer));
 
 		local_data.prediction_animstate->m_pBaseEntity = g_ctx.local();
@@ -117,8 +117,8 @@ void local_animations::update_prediction_animations()
 void local_animations::update_fake_animations()
 {
 	auto alloc = !local_data.animstate;
-	auto change = !alloc && handle != &g_ctx.local()->GetRefEHandle();
-	auto reset = !alloc && !change && g_ctx.local()->m_flSpawnTime() != spawntime;
+	auto change = !alloc && handle != &g_ctx.local()->GetRefEHandle(); //-V807
+	auto reset = !alloc && !change && g_ctx.local()->m_flSpawnTime() != spawntime; //-V550
 
 	if (change)
 		m_memalloc()->Free(local_data.animstate);
@@ -142,13 +142,13 @@ void local_animations::update_fake_animations()
 
 	if (!alloc && !change && !reset && fake_server_update)
 	{
-		float pose_parameter[24];
+		float pose_parameter[24]; //-V688
 		memcpy(pose_parameter, &g_ctx.local()->m_flPoseParameter(), 24 * sizeof(float));
 
-		AnimationLayer layers[15];
+		AnimationLayer layers[15]; //-V688
 		memcpy(layers, g_ctx.local()->get_animlayers(), g_ctx.local()->animlayer_count() * sizeof(AnimationLayer));
 
-		auto backup_frametime = m_globals()->m_frametime;
+		auto backup_frametime = m_globals()->m_frametime; //-V807
 		auto backup_curtime = m_globals()->m_curtime;
 
 		m_globals()->m_frametime = m_globals()->m_intervalpertick;
@@ -168,7 +168,7 @@ void local_animations::update_fake_animations()
 		{
 			for (auto& i : g_ctx.globals.fake_matrix)
 			{
-				i[0][3] -= g_ctx.local()->GetRenderOrigin().x;
+				i[0][3] -= g_ctx.local()->GetRenderOrigin().x; //-V807
 				i[1][3] -= g_ctx.local()->GetRenderOrigin().y;
 				i[2][3] -= g_ctx.local()->GetRenderOrigin().z;
 			}
@@ -184,15 +184,15 @@ void local_animations::update_fake_animations()
 
 void local_animations::update_local_animations(c_baseplayeranimationstate* animstate)
 {
-	if (tickcount != m_globals()->m_tickcount)
+	if (tickcount != m_globals()->m_tickcount) //-V550
 	{
-		memcpy(layers, g_ctx.local()->get_animlayers(), g_ctx.local()->animlayer_count() * sizeof(AnimationLayer));
+		tickcount = m_globals()->m_tickcount;
+		memcpy(layers, g_ctx.local()->get_animlayers(), g_ctx.local()->animlayer_count() * sizeof(AnimationLayer)); //-V807
 
 		if (local_data.animstate)
 			animstate->m_fDuckAmount = local_data.animstate->m_fDuckAmount;
 
 		animstate->m_iLastClientSideAnimationUpdateFramecount = 0;
-
 		util::update_state(animstate, local_animations::get().local_data.fake_angles);
 
 		if (real_server_update)
@@ -200,14 +200,11 @@ void local_animations::update_local_animations(c_baseplayeranimationstate* anims
 			abs_angles = animstate->m_flGoalFeetYaw;
 			memcpy(pose_parameter, &g_ctx.local()->m_flPoseParameter(), 24 * sizeof(float));
 		}
-
-		tickcount = m_globals()->m_tickcount;
 	}
 	else
 		animstate->m_iLastClientSideAnimationUpdateFramecount = m_globals()->m_framecount;
 
 	animstate->m_flGoalFeetYaw = antiaim::get().condition(g_ctx.get_command()) ? abs_angles : local_animations::get().local_data.real_angles.y;
-	animstate->m_flFeetYawRate = 0.f;
 	g_ctx.local()->set_abs_angles(Vector(0.0f, abs_angles, 0.0f));
 
 	memcpy(g_ctx.local()->get_animlayers(), layers, g_ctx.local()->animlayer_count() * sizeof(AnimationLayer));

@@ -79,20 +79,16 @@ void autowall::scale_damage(player_t* e, CGameTrace& enterTrace, weapon_info_t* 
 	switch (enterTrace.hitgroup)
 	{
 	case HITGROUP_HEAD:
-		currentDamage *= 4.0f * head_scale;
+		currentDamage *= armor_heavy ? 2.0f : 4.0f;
 		break;
 	case HITGROUP_STOMACH:
-		currentDamage *= 1.25f * body_scale;
-		break;
-	case HITGROUP_CHEST:
-	case HITGROUP_LEFTARM:
-	case HITGROUP_RIGHTARM:
-	case HITGROUP_GEAR:
-		currentDamage *= body_scale;
+		currentDamage *= 1.25f;
 		break;
 	case HITGROUP_LEFTLEG:
 	case HITGROUP_RIGHTLEG:
-		currentDamage *= 0.75f * body_scale;
+		currentDamage *= 0.75f;
+		break;
+	default:
 		break;
 	}
 
@@ -104,9 +100,9 @@ void autowall::scale_damage(player_t* e, CGameTrace& enterTrace, weapon_info_t* 
 
 		if (armor_heavy)
 		{
-			armor_ratio *= 0.2f;
+			armor_ratio *= 0.5f;
 			armor_bonus_ratio = 0.33f;
-			armor_scale = 0.25f;
+			armor_scale = 0.33f;
 		}
 
 		auto new_damage = currentDamage * armor_ratio;
@@ -269,39 +265,47 @@ bool autowall::handle_bullet_penetration(weapon_info_t* weaponData, CGameTrace& 
 	auto exit_penetration_modifier = exit_surface_data->game.flPenetrationModifier;
 
 	auto combined_damage_modifier = 0.16f;
-	auto combined_penetration_modifier = (enter_penetration_modifier + exit_penetration_modifier) * 0.5f;
+	auto combined_penetration_modifier = 0.0f;
 
-	if (enter_material == CHAR_TEX_GLASS || enter_material == CHAR_TEX_GRATE)
+	if (enter_material == CHAR_TEX_GRATE || enter_material == CHAR_TEX_GLASS)
 	{
 		combined_penetration_modifier = 3.0f;
 		combined_damage_modifier = 0.05f;
 	}
 	else if (contents_grate || surf_nodraw)
-		combined_penetration_modifier = 1.0f;
-	else if (enter_material == CHAR_TEX_FLESH && ((player_t*)enterTrace.hit_entity)->m_iTeamNum() == g_ctx.local()->m_iTeamNum() && !ff_damage_reduction_bullets)
 	{
-		if (!ff_damage_bullet_penetration) //-V550
+		combined_damage_modifier = 0.16f;
+		combined_penetration_modifier = 1.0f;
+	}
+	else if (enter_material == CHAR_TEX_FLESH && ((player_t*)enterTrace.hit_entity)->m_iTeamNum() == g_ctx.local()->m_iTeamNum() && !ff_damage_reduction_bullets == 0.0f)
+	{
+		if (!ff_damage_bullet_penetration == 0.0f) //-V550
 			return false;
 
 		combined_penetration_modifier = ff_damage_bullet_penetration;
 		combined_damage_modifier = 0.16f;
 	}
+	else
+	{
+		combined_damage_modifier = 0.16f;
+		combined_penetration_modifier = (enter_penetration_modifier + exit_penetration_modifier) * 0.5f;
+	}
 
 	if (enter_material == exit_material)
 	{
-		if (exit_material == CHAR_TEX_WOOD || exit_material == CHAR_TEX_CARDBOARD)
+		if (exit_material == CHAR_TEX_CARDBOARD || exit_material == CHAR_TEX_WOOD)
 			combined_penetration_modifier = 3.0f;
 		else if (exit_material == CHAR_TEX_PLASTIC)
 			combined_penetration_modifier = 2.0f;
 	}
 
 	auto penetration_modifier = std::fmaxf(0.0f, 1.0f / combined_penetration_modifier);
-	auto penetration_distance = (exit_trace.endpos - enterTrace.endpos).Length();
+	auto penetration_distance = (exit_trace.endpos - enterTrace.endpos).LengthSqr();
 
 	penetration_distance = penetration_distance * penetration_distance * penetration_modifier * 0.041666668f;
 
-	auto damage_modifier = max(0.0f, 3.0f / weaponData->flPenetration * 1.25f) * penetration_modifier * 3.0f + currentDamage * combined_damage_modifier + penetration_distance;
-	auto damage_lost = max(0.0f, damage_modifier);
+	auto damage_modifier = max(0.0f, 1.0f / weaponData->flPenetration);
+	auto damage_lost = (currentDamage * damage_modifier + max(0.0f, 3.75f / weaponData->flPenetration) * (damage_modifier * 3.0f)) + ((damage_modifier * penetration_distance) / 24.0f);
 
 	if (damage_lost > currentDamage)
 		return false;
