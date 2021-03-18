@@ -507,7 +507,9 @@ void C_HookedEvents::RegisterSelf()
 	eventmanager->AddListener(this, crypt_str("bomb_defused"), false);
 	eventmanager->AddListener(this, crypt_str("bomb_begindefuse"), false);
 	eventmanager->AddListener(this, crypt_str("bomb_beginplant"), false);
+	eventmanager->AddListener(this, crypt_str("vote_cast"), false);
 
+	g_ctx.globals.events.emplace_back(crypt_str("vote_cast"));
 	g_ctx.globals.events.emplace_back(crypt_str("player_footstep"));
 	g_ctx.globals.events.emplace_back(crypt_str("player_hurt"));
 	g_ctx.globals.events.emplace_back(crypt_str("player_death"));
