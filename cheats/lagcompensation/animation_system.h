@@ -5,46 +5,31 @@
 
 enum
 {
-	MAIN,
-	NONE,
-	FIRST,
-	SECOND
-};
-
-enum resolver_type
-{
-	ORIGINAL,
-	BRUTEFORCE,
-	LBY,
-	TRACE,
-	DIRECTIONAL
+	MATRIX_MAIN,
+	MATRIX_NEGATIVE,
+	MATRIX_ZERO,
+	MATRIX_POSITIVE
 };
 
 enum resolver_side
 {
 	RESOLVER_ORIGINAL,
+	RESOLVER_NEGATIVE,
+	RESOLVER_LOW_NEGATIVE,
 	RESOLVER_ZERO,
-	RESOLVER_FIRST,
-	RESOLVER_SECOND,
-	RESOLVER_LOW_FIRST,
-	RESOLVER_LOW_SECOND
+	RESOLVER_LOW_POSITIVE,
+	RESOLVER_POSITIVE,
 };
 
 struct matrixes
 {
 	matrix3x4_t main[MAXSTUDIOBONES];
+	matrix3x4_t negative[MAXSTUDIOBONES];
 	matrix3x4_t zero[MAXSTUDIOBONES];
-	matrix3x4_t first[MAXSTUDIOBONES];
-	matrix3x4_t second[MAXSTUDIOBONES];
+	matrix3x4_t positive[MAXSTUDIOBONES];
 };
 
 class adjust_data;
-class player_server
-{
-
-	float player,
-		m_pPlayer, SetAbsOrigin;
-};
 
 class resolver
 {
@@ -56,62 +41,52 @@ class resolver
 	bool was_first_bruteforce = false;
 	bool was_second_bruteforce = false;
 
+
 	float lock_side = 0.0f;
 	float original_goal_feet_yaw = 0.0f;
 	float original_pitch = 0.0f;
+	float resolve_way = 0.0f;
+	float last_anims_update_time;
+	int FreestandSide[64];
+	int resolveSide;
+
 public:
-	void resolver::ResolveAngles(player_t* e);
 	void initialize(player_t* e, adjust_data* record, const float& goal_feet_yaw, const float& pitch);
 	void reset();
 	void resolve_yaw();
-	void resolve_move();
-	void resolverreversed(double a1, int entity);
+	void skeetresik(player_t* e);
 	float resolve_pitch();
-	void animationresover(struct m_pAnimationSystem* m_pAnimRecordSystem, int* m_pPlayer, float m_flGoalFeetYaw);
-	void resolve(player_t* player);
-	void resolve_anim();
+	void ResolveAngles(player_t* player);
+	float resolveValue;
+	bool Side();
+	bool DesyncDetect();
+	void shitresolver();
+
+	AnimationLayer resolver_layers[3][13];
+	AnimationLayer previous_layers[13];
+	float negative_goal_feet_yaw = 0.0f;
+	float zero_goal_feet_yaw = 0.0f;
+	float positive_goal_feet_yaw = 0.0f;
+
 	resolver_side last_side = RESOLVER_ORIGINAL;
 };
 
-class c_resolver
-{
-	player_t* player = nullptr;
-	adjust_data* player_record = nullptr;
-
-	bool side = false;
-	bool fake = false;
-	bool was_first_bruteforce = false;
-	bool was_second_bruteforce = false;
-	bool resolving_way = false;
-	float goal_feet_yaw;
-	float lock_side = 0.0f;
-	float original_goal_feet_yaw = 0.0f;
-	float original_pitch = 0.0f;
-public:
-	void resolver_detect_move(int record_arg, float data, int prev_data);
-	void cresolver();
-	void animation_resolver();
-	bool has_fake(player_t* entity);
-	void resolve(player_t* m_player, int& history);
-
-};
-
-class adjust_data //-V730
+class adjust_data
 {
 public:
 	player_t* player;
 	int i;
 
-	AnimationLayer layers[15];
+	AnimationLayer layers[13];
 	matrixes matrixes_data;
 
-	resolver_type type;
 	resolver_side side;
 
 	bool invalid;
 	bool immune;
 	bool dormant;
 	bool bot;
+	bool shot;
 
 	int flags;
 	int bone_count;
@@ -127,7 +102,7 @@ public:
 	Vector mins;
 	Vector maxs;
 
-	adjust_data() //-V730
+	adjust_data()
 	{
 		reset();
 	}
@@ -137,13 +112,13 @@ public:
 		player = nullptr;
 		i = -1;
 
-		type = ORIGINAL;
 		side = RESOLVER_ORIGINAL;
 
 		invalid = false;
 		immune = false;
 		dormant = false;
 		bot = false;
+		shot = false;
 
 		flags = 0;
 		bone_count = 0;
@@ -162,7 +137,6 @@ public:
 
 	adjust_data(player_t* e, bool store = true)
 	{
-		type = ORIGINAL;
 		side = RESOLVER_ORIGINAL;
 
 		invalid = false;
@@ -173,7 +147,7 @@ public:
 	{
 		if (!e->is_alive())
 			return;
-	
+
 		player = e;
 		i = player->EntIndex();
 
@@ -186,14 +160,11 @@ public:
 		immune = player->m_bGunGameImmunity() || player->m_fFlags() & FL_FROZEN;
 		dormant = player->IsDormant();
 
-#if RELEASE
 		player_info_t player_info;
 		m_engine()->GetPlayerInfo(i, &player_info);
 
 		bot = player_info.fakeplayer;
-#else
-		bot = false;
-#endif
+		shot = player->m_hActiveWeapon() && (player->m_hActiveWeapon()->m_fLastShotTime() == player->m_flSimulationTime());
 
 		flags = player->m_fFlags();
 		bone_count = player->m_CachedBoneData().Count();
@@ -216,7 +187,7 @@ public:
 			return;
 
 		memcpy(player->get_animlayers(), layers, player->animlayer_count() * sizeof(AnimationLayer));
-		memcpy(player->m_CachedBoneData().Base(), matrixes_data.main, player->m_CachedBoneData().Count() * sizeof(matrix3x4_t)); //-V807
+		memcpy(player->m_CachedBoneData().Base(), matrixes_data.main, player->m_CachedBoneData().Count() * sizeof(matrix3x4_t));
 
 		player->m_fFlags() = flags;
 		player->m_CachedBoneData().m_Size = bone_count;
@@ -236,7 +207,7 @@ public:
 
 	bool valid(bool extra_checks = true)
 	{
-		if (!this) //-V704
+		if (!this)
 			return false;
 
 		if (i > 0)
@@ -271,8 +242,8 @@ public:
 		auto incoming = net_channel_info->GetLatency(FLOW_INCOMING);
 
 		auto correct = math::clamp(outgoing + incoming + util::get_interpolation(), 0.0f, sv_maxunlag->GetFloat());
-		
-		auto curtime = g_ctx.local()->is_alive() ? TICKS_TO_TIME(g_ctx.globals.fixed_tickbase) : m_globals()->m_curtime; //-V807
+
+		auto curtime = g_ctx.local()->is_alive() ? TICKS_TO_TIME(g_ctx.globals.fixed_tickbase) : m_globals()->m_curtime;
 		auto delta_time = correct - (curtime - simulation_time);
 
 		if (fabs(delta_time) > 0.2f)
@@ -297,15 +268,15 @@ class optimized_adjust_data
 {
 public:
 	int i;
+
 	player_t* player;
 
 	float simulation_time;
-	float duck_amount;
+	float speed;
 
-	Vector angles;
-	Vector origin;
+	bool shot;
 
-	optimized_adjust_data() //-V730
+	optimized_adjust_data()
 	{
 		reset();
 	}
@@ -313,13 +284,13 @@ public:
 	void reset()
 	{
 		i = 0;
+
 		player = nullptr;
 
 		simulation_time = 0.0f;
-		duck_amount = 0.0f;
+		speed = 0.0f;
 
-		angles.Zero();
-		origin.Zero();
+		shot = false;
 	}
 };
 

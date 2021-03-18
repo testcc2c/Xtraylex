@@ -1,4 +1,7 @@
-﻿#include "antiaim.h"
+﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
+#include "antiaim.h"
 #include "knifebot.h"
 #include "zeusbot.h"
 #include "..\misc\fakelag.h"
@@ -8,7 +11,7 @@
 
 void antiaim::create_move(CUserCmd* m_pcmd)
 {
-	auto velocity = g_ctx.local()->m_vecVelocity().Length(); //-V807
+	auto velocity = g_ctx.local()->m_vecVelocity().Length();
 
 	type = ANTIAIM_STAND;
 
@@ -27,7 +30,7 @@ void antiaim::create_move(CUserCmd* m_pcmd)
 	if (condition(m_pcmd))
 		return;
 
-	if ((type == ANTIAIM_LEGIT ? g_cfg.antiaim.desync : g_cfg.antiaim.type[type].desync) && (type == ANTIAIM_LEGIT ? !g_cfg.antiaim.legit_lby_type : !g_cfg.antiaim.lby_type) && !g_cfg.misc.fast_stop && (!g_ctx.globals.weapon->is_grenade() || g_cfg.esp.on_click && !(m_pcmd->m_buttons & IN_ATTACK) && !(m_pcmd->m_buttons & IN_ATTACK2)) && engineprediction::get().backup_data.velocity.Length2D() <= 20.0f) //-V648
+	if ((type == ANTIAIM_LEGIT ? g_cfg.antiaim.desync : g_cfg.antiaim.type[type].desync) && (type == ANTIAIM_LEGIT ? !g_cfg.antiaim.legit_lby_type : !g_cfg.antiaim.lby_type) && !g_cfg.misc.fast_stop && (!g_ctx.globals.weapon->is_grenade() || g_cfg.esp.on_click && !(m_pcmd->m_buttons & IN_ATTACK) && !(m_pcmd->m_buttons & IN_ATTACK2)) && engineprediction::get().backup_data.velocity.Length2D() <= 20.0f)
 	{
 		auto speed = 1.01f;
 
@@ -57,7 +60,7 @@ float antiaim::get_pitch(CUserCmd* m_pcmd)
 
 	if (g_ctx.send_packet)
 		should_invert = true;
-	else if (!g_ctx.send_packet && should_invert) //-V560
+	else if (!g_ctx.send_packet && should_invert)
 	{
 		should_invert = false;
 		invert_jitter = !invert_jitter;
@@ -103,19 +106,19 @@ float antiaim::get_yaw(CUserCmd* m_pcmd)
 
 	if (g_ctx.send_packet)
 		should_invert = true;
-	else if (!g_ctx.send_packet && should_invert) //-V560
+	else if (!g_ctx.send_packet && should_invert)
 	{
 		should_invert = false;
 		invert_jitter = !invert_jitter;
 	}
 
-	auto max_desync_delta = g_ctx.local()->get_max_desync_delta(); //-V807
+	auto max_desync_delta = g_ctx.local()->get_max_desync_delta();
 
 	auto yaw = 0.0f;
 	auto lby_type = 0;
 
 	if (type == ANTIAIM_LEGIT)
-	{
+	{	
 		yaw = m_pcmd->m_viewangles.y;
 
 		if (!g_cfg.antiaim.desync)
@@ -170,6 +173,12 @@ float antiaim::get_yaw(CUserCmd* m_pcmd)
 		}
 		else if (g_cfg.antiaim.type[type].desync == 1)
 			flip = key_binds::get().get_key_bind_state(16);
+		
+		if (g_cfg.antiaim.antibrute && g_cfg.antiaim.type[type].desync == 1) {
+			adjust_data record;
+			if (record.shot)
+				flip;
+		}
 
 		auto yaw_angle = 0.0f;
 
@@ -256,7 +265,7 @@ float antiaim::get_yaw(CUserCmd* m_pcmd)
 
 		yaw = base_angle + yaw_angle;
 
-		if (!desync_angle) //-V550
+		if (!desync_angle)
 			return yaw;
 
 		lby_type = g_cfg.antiaim.lby_type;
@@ -324,7 +333,7 @@ bool antiaim::condition(CUserCmd* m_pcmd, bool dynamic_check)
 	if (!g_cfg.antiaim.enable)
 		return true;
 
-	if (!g_ctx.local()->is_alive()) //-V807
+	if (!g_ctx.local()->is_alive())
 		return true;
 
 	if (g_ctx.local()->m_bGunGameImmunity() || g_ctx.local()->m_fFlags() & FL_FROZEN)
@@ -365,7 +374,7 @@ bool antiaim::condition(CUserCmd* m_pcmd, bool dynamic_check)
 }
 
 bool antiaim::should_break_lby(CUserCmd* m_pcmd, int lby_type)
-{
+{	
 	if (!lby_type)
 		return false;
 
@@ -378,7 +387,7 @@ bool antiaim::should_break_lby(CUserCmd* m_pcmd, int lby_type)
 		fakelag::get().started_peeking = false;
 	}
 
-	auto animstate = g_ctx.local()->get_animation_state(); //-V807
+	auto animstate = g_ctx.local()->get_animation_state();
 
 	if (!animstate)
 		return false;
@@ -404,7 +413,7 @@ float antiaim::at_targets()
 
 	for (auto i = 1; i < m_globals()->m_maxclients; i++)
 	{
-		auto e = static_cast<player_t*>(m_entitylist()->GetClientEntity(i));
+		auto e = static_cast<player_t *>(m_entitylist()->GetClientEntity(i));
 
 		if (!e->valid(true))
 			continue;

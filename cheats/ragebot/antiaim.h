@@ -7,6 +7,8 @@
 class antiaim : public singleton <antiaim>
 {
 public:
+	//adjust_data* player_record = nullptr;
+
 	void create_move(CUserCmd* m_pcmd);
 	float get_pitch(CUserCmd* m_pcmd);
 	float get_yaw(CUserCmd* m_pcmd);
