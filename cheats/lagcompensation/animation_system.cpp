@@ -1,3 +1,6 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 #include "animation_system.h"
 #include "..\misc\misc.h"
 #include "..\misc\logs.h"
@@ -215,6 +218,9 @@ void lagcompensation::update_player_animations(player_t* e)
 		auto ticks_chocked = 1;
 		auto simulation_ticks = TIME_TO_TICKS(e->m_flSimulationTime() - previous_record->simulation_time);
 
+		if (simulation_ticks > 0 && simulation_ticks < 31)
+			ticks_chocked = simulation_ticks;
+
 		if (ticks_chocked > 1)
 		{
 			auto land_time = 0.0f;
@@ -298,17 +304,17 @@ void lagcompensation::update_player_animations(player_t* e)
 
 		switch (matrix)
 		{
-		case MATRIX_MAIN:
+		case MAIN:
 			e->setup_bones_fixed(record->matrixes_data.main, BONE_USED_BY_ANYTHING);
 			break;
-		case MATRIX_NEGATIVE:
-			e->setup_bones_fixed(record->matrixes_data.negative, BONE_USED_BY_HITBOX);
-			break;
-		case MATRIX_ZERO:
+		case NONE:
 			e->setup_bones_fixed(record->matrixes_data.zero, BONE_USED_BY_HITBOX);
 			break;
-		case MATRIX_POSITIVE:
-			e->setup_bones_fixed(record->matrixes_data.positive, BONE_USED_BY_HITBOX);
+		case FIRST:
+			e->setup_bones_fixed(record->matrixes_data.first, BONE_USED_BY_HITBOX);
+			break;
+		case SECOND:
+			e->setup_bones_fixed(record->matrixes_data.second, BONE_USED_BY_HITBOX);
 			break;
 		}
 
@@ -326,60 +332,82 @@ void lagcompensation::update_player_animations(player_t* e)
 		previous_goal_feet_yaw[e->EntIndex()] = animstate->m_flGoalFeetYaw;
 		memcpy(animstate, &state, sizeof(c_baseplayeranimationstate));
 
-		animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 60.f);
-
-		g_ctx.globals.updating_animation = true;
-		e->update_clientside_animation();
-		g_ctx.globals.updating_animation = false;
-
-		setup_matrix(e, animlayers, MATRIX_NEGATIVE);
-		memcpy(animstate, &state, sizeof(c_baseplayeranimationstate));
-		player_resolver[e->EntIndex()].negative_goal_feet_yaw = animstate->m_flGoalFeetYaw;
-		memcpy(player_resolver[e->EntIndex()].resolver_layers[0], e->get_animlayers(), e->animlayer_count() * sizeof(AnimationLayer));
-
 		animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y);
 
 		g_ctx.globals.updating_animation = true;
 		e->update_clientside_animation();
 		g_ctx.globals.updating_animation = false;
 
-		setup_matrix(e, animlayers, MATRIX_ZERO);
+		setup_matrix(e, animlayers, NONE);
 		memcpy(animstate, &state, sizeof(c_baseplayeranimationstate));
-		player_resolver[e->EntIndex()].zero_goal_feet_yaw = animstate->m_flGoalFeetYaw;
-		memcpy(player_resolver[e->EntIndex()].resolver_layers[1], e->get_animlayers(), e->animlayer_count() * sizeof(AnimationLayer));
+		player_resolver[e->EntIndex()].gfy_default = animstate->m_flGoalFeetYaw;
+		memcpy(player_resolver[e->EntIndex()].resolver_layers[0], e->get_animlayers(), e->animlayer_count() * sizeof(AnimationLayer));
 
-		animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y + 60.f);
+		animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y + 60.0f);
 
 		g_ctx.globals.updating_animation = true;
 		e->update_clientside_animation();
 		g_ctx.globals.updating_animation = false;
 
-		setup_matrix(e, animlayers, MATRIX_POSITIVE);
+		setup_matrix(e, animlayers, FIRST);
 		memcpy(animstate, &state, sizeof(c_baseplayeranimationstate));
-		player_resolver[e->EntIndex()].positive_goal_feet_yaw = animstate->m_flGoalFeetYaw;
 		memcpy(player_resolver[e->EntIndex()].resolver_layers[2], e->get_animlayers(), e->animlayer_count() * sizeof(AnimationLayer));
 
+		animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 60.0f);
+
+		g_ctx.globals.updating_animation = true;
+		e->update_clientside_animation();
+		g_ctx.globals.updating_animation = false;
+
+		setup_matrix(e, animlayers, SECOND);
+		memcpy(animstate, &state, sizeof(c_baseplayeranimationstate));
+		memcpy(player_resolver[e->EntIndex()].resolver_layers[1], e->get_animlayers(), e->animlayer_count() * sizeof(AnimationLayer));
+
 		player_resolver[e->EntIndex()].initialize(e, record, previous_goal_feet_yaw[e->EntIndex()], e->m_angEyeAngles().x);
-	//	player_resolver[e->EntIndex()].resolve_yaw();
-		//player_resolver[e->EntIndex()].skeetresik(e);
-		player_resolver[e->EntIndex()].ResolveAngles(e);
+		player_resolver[e->EntIndex()].resolve_yaw();
 
 		if (g_cfg.player_list.low_delta[e->EntIndex()])
 		{
 			switch (record->side)
 			{
-			case RESOLVER_POSITIVE:
-				record->side = RESOLVER_LOW_POSITIVE;
+			case RESOLVER_FIRST:
+				record->side = RESOLVER_LOW_FIRST;
 				break;
-			case RESOLVER_NEGATIVE:
-				record->side = RESOLVER_LOW_NEGATIVE;
+			case RESOLVER_SECOND:
+				record->side = RESOLVER_LOW_SECOND;
 				break;
-			case RESOLVER_LOW_POSITIVE:
-				record->side = RESOLVER_POSITIVE;
+			case RESOLVER_LOW_FIRST:
+				record->side = RESOLVER_FIRST;
 				break;
-			case RESOLVER_LOW_NEGATIVE:
-				record->side = RESOLVER_NEGATIVE;
+			case RESOLVER_LOW_SECOND:
+				record->side = RESOLVER_SECOND;
 				break;
+			}
+		}
+		else
+		{
+			for (auto it = lagcompensation::get().player_sets.begin(); it != lagcompensation::get().player_sets.end(); ++it)
+			{
+				if (it->id == player_info.steamID64 && it->res_type == HISTORY_LOW)
+				{
+					switch (record->side)
+					{
+					case RESOLVER_FIRST:
+						record->side = RESOLVER_LOW_FIRST;
+						break;
+					case RESOLVER_SECOND:
+						record->side = RESOLVER_LOW_SECOND;
+						break;
+					case RESOLVER_LOW_FIRST:
+						record->side = RESOLVER_FIRST;
+						break;
+					case RESOLVER_LOW_SECOND:
+						record->side = RESOLVER_SECOND;
+						break;
+					}
+
+					break;
+				}
 			}
 		}
 
@@ -388,20 +416,20 @@ void lagcompensation::update_player_animations(player_t* e)
 		case RESOLVER_ORIGINAL:
 			animstate->m_flGoalFeetYaw = previous_goal_feet_yaw[e->EntIndex()];
 			break;
-		case RESOLVER_NEGATIVE:
-			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 60.f);
-			break;
-		case RESOLVER_LOW_NEGATIVE:
-			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 30.f);
-			break;
 		case RESOLVER_ZERO:
 			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y);
 			break;
-		case RESOLVER_LOW_POSITIVE:
-			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y + 30.f);
-			break;
-		case RESOLVER_POSITIVE:
+		case RESOLVER_FIRST:
 			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y + 60.f);
+			break;
+		case RESOLVER_SECOND:
+			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 60.f);
+			break;
+		case RESOLVER_LOW_FIRST:
+			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y + 20.f);
+			break;
+		case RESOLVER_LOW_SECOND:
+			animstate->m_flGoalFeetYaw = math::normalize_yaw(e->m_angEyeAngles().y - 20.f);
 			break;
 		}
 
@@ -412,7 +440,7 @@ void lagcompensation::update_player_animations(player_t* e)
 	e->update_clientside_animation();
 	g_ctx.globals.updating_animation = false;
 
-	setup_matrix(e, animlayers, MATRIX_MAIN);
+	setup_matrix(e, animlayers, MAIN);
 	memcpy(e->m_CachedBoneData().Base(), record->matrixes_data.main, e->m_CachedBoneData().Count() * sizeof(matrix3x4_t));
 
 	m_globals()->m_curtime = backup_curtime;

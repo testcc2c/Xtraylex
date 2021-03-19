@@ -328,7 +328,7 @@ const char* events[] =
 	"Player hits",
 	"Items",
 	"Bomb",
-	"VOTE"  //add this one
+	"Vote"  //add this one
 };
 
 const char* grenades[] =
@@ -389,7 +389,12 @@ const char* player_model_t[] =
 	"Buckshot",
 	"McCoy",
 	"Commander Ricksaw",
-	"Agent Ava"/*,
+	"Agent Ava",
+	"Banana joe",
+	"Hitler",
+	"Deadpool",
+	"Helena"/*,
+
 	"CS Online 2: Mila",
 	"CS Online 2: Choi",
 	"Hitler",
@@ -419,8 +424,11 @@ const char* player_model_ct[] =
 	"Buckshot",
 	"McCoy",
 	"Commander Ricksaw",
-	"Agent Ava"/*,
-	"CS Online 2: Mila",
+	"Agent Ava",
+	"Banana joe",
+	"Hitler",
+	"Deadpool",
+	"Helena"/*,
 	"CS Online 2: Choi",
 	"Hitler",
 	"Dogirl"*/

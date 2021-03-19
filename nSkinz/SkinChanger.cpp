@@ -29,11 +29,12 @@ void InitCustomModels()
 	// cache will be reloaded each new map
 	if (!LoadPlayerMdlOnce)
 	{
-		LoadModel("models/player/custom_player/kuristaja/cso2/mila/mila.mdl");
-		LoadModel("models/player/custom_player/kuristaja/cso2/choi/choi.mdl");
+		//LoadModel("models/player/custom_player/kuristaja/cso2/mila/mila.mdl");
+		//oadModel("models/player/custom_player/kuristaja/cso2/choi/choi.mdl");
+		LoadModel("models/player/custom_player/kuristaja/banana_joe/banana_joe.mdl");
 		LoadModel("models/player/custom_player/kuristaja/hitler/hitler.mdl");
-		LoadModel("models/player/custom_player/2019x/dogirl/a0.mdl");
-
+		LoadModel("models/player/custom_player/kuristaja/deadpool/deadpool.mdl");
+		LoadModel("models/player/custom_player/kuristaja/re6/helena/helena.mdl");
 		LoadPlayerMdlOnce = true;
 	}
 }
@@ -62,6 +63,10 @@ static const char* player_model_index_t[] =
 	"models/player/custom_player/legacy/ctm_st6_variantm.mdl",
 	"models/player/custom_player/legacy/ctm_st6_varianti.mdl",
 	"models/player/custom_player/legacy/ctm_fbi_variantb.mdl",
+	"models/player/custom_player/kuristaja/banana_joe/banana_joe.mdl",
+	"models/player/custom_player/kuristaja/hitler/hitler.mdl",
+	"models/player/custom_player/kuristaja/deadpool/deadpool.mdl",
+	"models/player/custom_player/kuristaja/re6/helena/helena.mdl",
 	/*"models/player/custom_player/kuristaja/cso2/mila/mila.mdl",
 	"models/player/custom_player/kuristaja/cso2/choi/choi.mdl",
 	"models/player/custom_player/kuristaja/hitler/hitler.mdl",
@@ -91,6 +96,11 @@ static const char* player_model_index_ct[] =
 	"models/player/custom_player/legacy/ctm_st6_variantm.mdl",
 	"models/player/custom_player/legacy/ctm_st6_varianti.mdl",
 	"models/player/custom_player/legacy/ctm_fbi_variantb.mdl",
+    "models/player/custom_player/kuristaja/banana_joe/banana_joe.mdl",
+	"models/player/custom_player/kuristaja/hitler/hitler.mdl",
+	"models/player/custom_player/kuristaja/deadpool/deadpool.mdl",
+	"models/player/custom_player/kuristaja/re6/helena/helena.mdl",
+
 	/*"models/player/custom_player/kuristaja/cso2/mila/mila.mdl",
 	"models/player/custom_player/kuristaja/cso2/choi/choi.mdl",
 	"models/player/custom_player/kuristaja/hitler/hitler.mdl",

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "..\..\includes.hpp"
 #include "..\lagcompensation\animation_system.h"
 
@@ -164,10 +164,8 @@ class aim : public singleton <aim>
 	void scan_targets();
 	bool automatic_stop(CUserCmd* cmd);
 	void find_best_target();
-	bool DtHs(CUserCmd* cmd);
 	void fire(CUserCmd* cmd);
 	void build_seed_table();
-	int hitchance(const Vector& aim_angle);
 	bool calculate_hitchance(int& final_hitchance);
 
 	std::vector <scanned_target> scanned_targets;
@@ -176,7 +174,6 @@ public:
 	void run(CUserCmd* cmd);
 	void scan(adjust_data* record, scan_data& data, const Vector& shoot_position = g_ctx.globals.eye_pos);
 	std::vector <int> get_hitboxes(adjust_data* record);
-	float GetPointScale(float flHitboxRadius, Vector* vecPos, Vector* veсPoint, int iHitbox);
 	std::vector <scan_point> get_points(adjust_data* record, int hitbox, bool from_aim = true);
 	bool hitbox_intersection(player_t* e, matrix3x4_t* matrix, int hitbox, const Vector& start, const Vector& end);
 

@@ -3,30 +3,63 @@
 #include "..\..\includes.hpp"
 #include "..\..\sdk\structs.hpp"
 
+enum resolver_history
+{
+	HISTORY_UNKNOWN = -1,
+	HISTORY_ORIGINAL,
+	HISTORY_ZERO,
+	HISTORY_DEFAULT,
+	HISTORY_LOW
+};
+
+struct player_settings
+{
+	__int64 id;
+	resolver_history res_type;
+	bool faking;
+	int neg;
+	int pos;
+
+	player_settings(__int64 id, resolver_history res_type, bool faking, int left, int right) noexcept : id(id), res_type(res_type), faking(faking), neg(neg), pos(pos)
+	{
+
+	}
+};
+
 enum
 {
-	MATRIX_MAIN,
-	MATRIX_NEGATIVE,
-	MATRIX_ZERO,
-	MATRIX_POSITIVE
+	MAIN,
+	NONE,
+	FIRST,
+	SECOND
+};
+
+enum resolver_type
+{
+	ORIGINAL,
+	BRUTEFORCE,
+	LBY,
+	LAYERS,
+	TRACE,
+	DIRECTIONAL
 };
 
 enum resolver_side
 {
 	RESOLVER_ORIGINAL,
-	RESOLVER_NEGATIVE,
-	RESOLVER_LOW_NEGATIVE,
 	RESOLVER_ZERO,
-	RESOLVER_LOW_POSITIVE,
-	RESOLVER_POSITIVE,
+	RESOLVER_FIRST,
+	RESOLVER_SECOND,
+	RESOLVER_LOW_FIRST,
+	RESOLVER_LOW_SECOND
 };
 
 struct matrixes
 {
 	matrix3x4_t main[MAXSTUDIOBONES];
-	matrix3x4_t negative[MAXSTUDIOBONES];
 	matrix3x4_t zero[MAXSTUDIOBONES];
-	matrix3x4_t positive[MAXSTUDIOBONES];
+	matrix3x4_t first[MAXSTUDIOBONES];
+	matrix3x4_t second[MAXSTUDIOBONES];
 };
 
 class adjust_data;
@@ -38,35 +71,24 @@ class resolver
 
 	bool side = false;
 	bool fake = false;
+
 	bool was_first_bruteforce = false;
 	bool was_second_bruteforce = false;
-
+	bool was_first_low_bruteforce = false;
+	bool was_second_low_bruteforce = false;
 
 	float lock_side = 0.0f;
 	float original_goal_feet_yaw = 0.0f;
 	float original_pitch = 0.0f;
-	float resolve_way = 0.0f;
-	float last_anims_update_time;
-	int FreestandSide[64];
-	int resolveSide;
-
 public:
 	void initialize(player_t* e, adjust_data* record, const float& goal_feet_yaw, const float& pitch);
 	void reset();
 	void resolve_yaw();
-	void skeetresik(player_t* e);
 	float resolve_pitch();
-	void ResolveAngles(player_t* player);
-	float resolveValue;
-	bool Side();
-	bool DesyncDetect();
-	void shitresolver();
 
 	AnimationLayer resolver_layers[3][13];
 	AnimationLayer previous_layers[13];
-	float negative_goal_feet_yaw = 0.0f;
-	float zero_goal_feet_yaw = 0.0f;
-	float positive_goal_feet_yaw = 0.0f;
+	float gfy_default = 0.0f;
 
 	resolver_side last_side = RESOLVER_ORIGINAL;
 };
@@ -80,6 +102,7 @@ public:
 	AnimationLayer layers[13];
 	matrixes matrixes_data;
 
+	resolver_type type;
 	resolver_side side;
 
 	bool invalid;
@@ -112,6 +135,7 @@ public:
 		player = nullptr;
 		i = -1;
 
+		type = ORIGINAL;
 		side = RESOLVER_ORIGINAL;
 
 		invalid = false;
@@ -137,6 +161,7 @@ public:
 
 	adjust_data(player_t* e, bool store = true)
 	{
+		type = ORIGINAL;
 		side = RESOLVER_ORIGINAL;
 
 		invalid = false;
@@ -252,7 +277,7 @@ public:
 		auto extra_choke = 0;
 
 		if (g_ctx.globals.fakeducking)
-			extra_choke = 14 - m_clientstate()->iChokedCommands;
+			extra_choke = 14 - m_clientstate()->m_choked_commands;
 
 		auto server_tickcount = extra_choke + m_globals()->m_tickcount + TIME_TO_TICKS(outgoing + incoming);
 		auto dead_time = (int)(TICKS_TO_TIME(server_tickcount) - sv_maxunlag->GetFloat());
@@ -304,6 +329,7 @@ public:
 	void update_player_animations(player_t* e);
 
 	resolver player_resolver[65];
+	std::vector<player_settings> player_sets;
 
 	bool is_dormant[65];
 	float previous_goal_feet_yaw[65];

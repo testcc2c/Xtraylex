@@ -74,10 +74,10 @@ void knifebot::fire(CUserCmd* cmd)
 	if (!g_ctx.globals.weapon->can_fire(false))
 		return;
 
-	auto vecOrigin = final_target.record->origin;
+	auto vecOrigin = final_target.record->player->m_vecOrigin();
 
-	auto vecOBBMins = final_target.record->mins;
-	auto vecOBBMaxs = final_target.record->maxs;
+	auto vecOBBMins = final_target.record->player->GetCollideable()->OBBMins();
+	auto vecOBBMaxs = final_target.record->player->GetCollideable()->OBBMaxs();
 
 	auto vecMins = vecOBBMins + vecOrigin;
 	auto vecMaxs = vecOBBMaxs + vecOrigin;
